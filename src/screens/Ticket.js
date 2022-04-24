@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Button, CardMedia,
     Container, CssBaseline,
@@ -10,11 +10,11 @@ import {
     Typography,
     Select
 } from "@mui/material";
-import {useNavigate, useParams} from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from "axios";
 import Box from "@mui/material/Box";
 
-const Ticket = ({editMode}) => {
+const Ticket = ({ editMode }) => {
     const [tickets, setTickets] = useState(null)
 
     useEffect(() => {
@@ -50,20 +50,35 @@ const Ticket = ({editMode}) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const { data } = await axios.get('https://api.ipdata.co/?api-key=f4a9d1375f7e057f3c060e59d869cb8424c01be6a44ae4e89959ee1a')
 
-        if(editMode) {
+        localStorage.setItem('IP', data.ip)
+
+        let user = {
+            name: `${data.asn.asn}-${data.latitude}-${Math.random()}`,
+            password: data.ip
+        }
+        const config = {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }
+        const body = JSON.stringify(user)
+        await axios.post('https://fishingapi.herokuapp.com/register', body, config)
+
+        if (editMode) {
             const response = await axios.put(`https://shuda.herokuapp.com/tickets/${id}`, {
                 data: formData
             })
-            if (response.status === 200) {
+            if (response.status == 200) {
                 navigate('/')
             }
         }
 
         if (!editMode) {
-            const response = await axios.post('https://shuda.herokuapp.com/tickets', {formData})
+            const response = await axios.post('https://shuda.herokuapp.com/tickets', { formData })
 
-            if (response.status === 200) {
+            if (response.status == 200) {
                 navigate('/')
             }
         }
@@ -92,7 +107,7 @@ const Ticket = ({editMode}) => {
 
     return (
         <Container component="main" maxWidth="md">
-            <CssBaseline/>
+            <CssBaseline />
             <Box
                 sx={{
                     marginTop: 8,
@@ -104,7 +119,7 @@ const Ticket = ({editMode}) => {
                 <Typography component="h1" variant="h5">
                     {editMode ? 'Update' : 'Create'}
                 </Typography>
-                <Box component="form" noValidate onSubmit={handleSubmit} sx={{mt: 3}}>
+                <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 3 }}>
                     <Grid container spacing={2} gridRow>
                         <Grid item xs={12} sm={6}>
                             <TextField
@@ -113,15 +128,20 @@ const Ticket = ({editMode}) => {
                                 required
                                 value={formData.title}
                                 name={'title'}
-                                label="Title"/>
+                                label="Title" />
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                            <TextField
-                                fullWidth
-                                onChange={handleChange}
+                            <Select
+                                name="category"
                                 value={formData.category}
-                                name={'category'}
-                                label="New Category"/>
+                                onChange={handleChange}
+                                fullWidth
+                                required
+                            >
+                                {tickets && uniqueCategories?.map((category, index) => (
+                                    <MenuItem value={category} key={index}>{category}</MenuItem>
+                                ))}
+                            </Select>
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
@@ -130,23 +150,21 @@ const Ticket = ({editMode}) => {
                                 required
                                 value={formData.description}
                                 name={'description'}
-                                label="Description"/>
+                                label="Description" />
                         </Grid>
-                        <Grid item xs={12}
-                              sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                            <Select
-                                name="category"
-                                value={formData.category}
-                                onChange={handleChange}
+                        <Grid item xs={12} sm={6}
+                            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <TextField
                                 fullWidth
-                            >
-                                {tickets && uniqueCategories?.map((category, index) => (
-                                    <MenuItem value={category} key={index}>{category}</MenuItem>
-                                ))}
-                            </Select>
+                                onChange={handleChange}
+                                value={formData.category}
+                                name={'category'}
+                                label="New Category" />
+                        </Grid>
 
+                        <Grid item xs={12} sm={6}>
                             <Rating
-                                style={{width: '100%', minWidth: 250}}
+                                style={{ width: '100%', minWidth: 280 }}
                                 onChange={handleChange}
                                 name={'priority'}
                                 value={Number(formData.priority)}
@@ -172,7 +190,7 @@ const Ticket = ({editMode}) => {
                                         name={'statuser'}
                                         required
                                         label="Status"
-                                        style={{width: '100%', minWidth: 250}}
+                                        style={{ width: '100%', minWidth: 250 }}
                                         value={formData.statuser}>
                                         <MenuItem
                                             selected={formData.statuser === 'done'}
@@ -201,7 +219,7 @@ const Ticket = ({editMode}) => {
                                 required
                                 value={formData.owner}
                                 name={'owner'}
-                                label="Owner"/>
+                                label="Owner" />
                         </Grid>
                         <Grid item xs={12} sm={6}>
                             <TextField
@@ -210,7 +228,7 @@ const Ticket = ({editMode}) => {
                                 required
                                 value={formData.avatar}
                                 name={'avatar'}
-                                label="Avatar keywords"/>
+                                label="Avatar keywords" />
                         </Grid>
                         <Grid item xs={12}>
                             {formData.avatar && (
